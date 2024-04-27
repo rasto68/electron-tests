@@ -1,0 +1,153 @@
+addr = &6000
+color1 = &fe08
+color2 = &fe09
+osbyte = &ffee
+ORG &3000
+
+.start
+    ; set mode 4
+    lda #160
+    sta &fe07
+
+    ; need equivalent of VDU23,1,0;0;0;0; here to turn off cursor
+
+    ; keyboard off
+    ; *fx 178,0,0
+    lda #0
+    sta &242
+
+    ; plus 1 off
+    lda #&d6
+    sta &212
+    lda #&f1
+    sta &213
+    lda #0
+    sta &2a0+12
+
+    sei
+    lda #irq_handler MOD 256
+    sta &204
+    lda #irq_handler DIV 256
+    sta &205
+    rts
+
+.irq_handler
+    lda &fe00
+    and #4
+    beq check_rtc
+    ; vsync interrupt
+    jsr draw
+    jmp irq_end
+
+.check_rtc
+    lda &fe00
+    and #8
+    beq irq_end
+    ; rtc interrupt
+.irq_end
+    lda #32+16
+    sta &fe05
+    rti
+
+.draw
+    ; red
+    lda #84
+    sta color1
+    lda #20
+    sta color2
+
+    jsr delay2
+
+    ; green
+    lda #84
+    sta color1
+    lda #5
+    sta color2
+
+    jsr delay2
+
+    ; yellow
+    lda #84
+    sta color1
+    lda #4
+    sta color2
+
+    jsr delay2
+
+    ; magenta
+    lda #68
+    sta color1
+    lda #20
+    sta color2
+
+    jsr delay2
+
+    ; cyan
+    lda #68
+    sta color1
+    lda #5
+    sta color2
+
+    jsr delay2
+
+    ; blue
+    lda #68
+    sta color1
+    lda #21
+    sta color2
+
+    jsr delay2
+
+    ; black
+    lda #255
+    sta color1
+    lda #255
+    sta color2
+
+    jsr delay2
+
+    ; white
+    lda #9
+    sta color1
+    lda #0
+    sta color2
+
+    jsr delay2
+
+    rts
+
+
+.delay
+    lda #19
+    jsr osbyte
+
+    ; black
+    lda #255
+    sta color1
+    lda #255
+    sta color2
+
+    ldy #0
+.outer
+    ldx #0
+.inner
+    inx
+    cpx #0
+    bne inner
+    iny
+    cpy #64
+    bne outer
+    rts
+
+.delay2
+    ldx #0
+.inner2
+    inx
+    cpx #64
+    bne inner2
+    rts
+
+.end
+    RTS
+
+SAVE "rapid", start, end
