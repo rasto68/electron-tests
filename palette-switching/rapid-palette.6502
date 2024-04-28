@@ -2,9 +2,12 @@ addr = &6000
 color1 = &fe08
 color2 = &fe09
 osbyte = &ffee
+bar_delay_count = &70
+bar_delay_direction = &71
+old_irq = &72
 ORG &3000
 
-.start
+.start    
     ; set mode 4
     lda #160
     sta &fe07
@@ -26,13 +29,31 @@ ORG &3000
 
 
     sei
+    ; enable only rtc (8) & vsync (4) interrupts
+    lda #12
+    sta &fe00
+
+    lda &204
+    sta old_irq
+    lda &205
+    sta old_irq + 1
     lda #irq_handler MOD 256
     sta &204
     lda #irq_handler DIV 256
     sta &205
+
+    lda #128
+    sta bar_delay_count
+    lda #0
+    sta bar_delay_direction
     rts
 
 .irq_handler
+    php
+    lda &fc
+    pha
+    txa
+    pha
     lda &fe00
     and #4
     beq check_rtc
@@ -41,21 +62,242 @@ ORG &3000
     ; set black background
     lda #255
     sta color1
-    lda #255
     sta color2
 
-    jmp irq_end
+    ; clear vsync interrupt
+    lda #16
+    sta &fe05
+    pla
+    tax
+    pla
+    sta &fc
+    plp
+    rti
 
 .check_rtc
     lda &fe00
     and #8
-    beq irq_end
-    ; rtc interrupt
+    bne handle_rtc     ; rtc interrupt
+    
+    ; return from the interrupt
+    pla
+    sta &fc
+    plp
+    jmp (old_irq)
 
+.handle_rtc
+
+;     ldx bar_delay_count
+; .wait_loop
+;     dex
+;     beq draw_bars
+;     jsr delay1
+;     jmp wait_loop
+
+; .draw_bars
+;     ldx bar_delay_count
+;     lda bar_delay_direction
+;     beq decrement
+;     inx
+;     stx bar_delay_count
+;     cpx #60
+;     lda #0 ; start decrementing next time around
+;     sta bar_delay_direction
+;     jmp start_drawing
+; .decrement
+;     dex
+;     stx bar_delay_count
+;     bne start_drawing
+;     lda #1 ; start incrementing next time around
+;     sta bar_delay_direction
+
+    jsr delay1
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+    jsr delay3
+
+    jsr draw_bars
+
+    ; clear RTC interrupt
+    lda #32
+    sta &fe05
+
+    pla
+    tax
+    pla
+    sta &fc
+    plp
+    jmp (old_irq)
+
+.draw_bars
+.start_drawing
     ; set red background
     lda #84
     sta color1
     lda #20
+    sta color2
+
+    jsr delay2
+
+    ; set yellow background
+    lda #84
+    sta color1
+    lda #4
+    sta color2
+
+    jsr delay2
+
+    ; set magenta background
+    lda #68
+    sta color1
+    lda #20
+    sta color2
+
+    jsr delay2
+
+    ; set cyan background
+    lda #68
+    sta color1
+    lda #5
+    sta color2
+
+    jsr delay2
+
+    ; set blue background
+    lda #68
+    sta color1
+    lda #21
     sta color2
 
     jsr delay2
@@ -66,11 +308,21 @@ ORG &3000
     lda #5
     sta color2
 
-.irq_end
-    lda #48
-    sta &fe05
-    lda &fc
-    rti
+    jsr delay2
+
+    ; set white background
+    lda #9
+    sta color1
+    lda #0
+    sta color2
+
+    jsr delay2
+
+    ; set black background
+    lda #255
+    sta color1
+    sta color2
+    rts
 
 .draw
     ; red
@@ -139,29 +391,25 @@ ORG &3000
 
     rts
 
-
-.delay
-    lda #19
-    jsr osbyte
-
-    ; black
-    lda #255
-    sta color1
-    lda #255
-    sta color2
-
-    ldy #0
-.outer
-    ldx #0
-.inner
-    inx
-    cpx #0
-    bne inner
-    iny
-    cpy #64
-    bne outer
+; wait just long enough after the RTC so that our first 'draw_bars' call will
+; result in the bar colour being set at the start of a scan line
+.delay1
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
     rts
 
+; this delay is enough to cause a 4 pixel high coloured background bar
 .delay2
     nop
     nop
@@ -181,7 +429,104 @@ ORG &3000
     nop
     nop
     nop
+    nop
+    nop
+    nop ; 1 mode 4 scanline
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop ; 2 mode 4 scanlines
+
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop ; 3 mode 4 scanlines
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop ; 4 mode 4 scanlines
     rts
+
+; this delay is enough to skip 1 scan line at a time
+.delay3
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    rts ; 58 + 6 (jsr) = 64 cycles = 1 mode 4 scan line?
 
 .end
     RTS
