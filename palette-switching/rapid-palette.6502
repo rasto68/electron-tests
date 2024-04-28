@@ -24,6 +24,7 @@ ORG &3000
     lda #0
     sta &2a0+12
 
+
     sei
     lda #irq_handler MOD 256
     sta &204
@@ -36,7 +37,13 @@ ORG &3000
     and #4
     beq check_rtc
     ; vsync interrupt
-    jsr draw
+
+    ; set black background
+    lda #255
+    sta color1
+    lda #255
+    sta color2
+
     jmp irq_end
 
 .check_rtc
@@ -44,9 +51,25 @@ ORG &3000
     and #8
     beq irq_end
     ; rtc interrupt
+
+    ; set red background
+    lda #84
+    sta color1
+    lda #20
+    sta color2
+
+    jsr delay2
+
+    ; set green background
+    lda #84
+    sta color1
+    lda #5
+    sta color2
+
 .irq_end
-    lda #32+16
+    lda #48
     sta &fe05
+    lda &fc
     rti
 
 .draw
@@ -140,11 +163,24 @@ ORG &3000
     rts
 
 .delay2
-    ldx #0
-.inner2
-    inx
-    cpx #64
-    bne inner2
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
     rts
 
 .end
