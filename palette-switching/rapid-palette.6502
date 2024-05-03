@@ -1,7 +1,7 @@
 addr = &6000
 color1 = &fe08
 color2 = &fe09
-osbyte = &ffee
+oswrch = &ffee
 bar_delay_count = &70
 bar_delay_direction = &71
 old_irq = &72
@@ -9,10 +9,11 @@ ORG &3000
 
 .start    
     ; set mode 4
-    lda #160
-    sta &fe07
+    lda #22 : jsr oswrch : lda #4 : jsr oswrch
 
     ; need equivalent of VDU23,1,0;0;0;0; here to turn off cursor
+    lda #23 : jsr oswrch : lda #1 : jsr oswrch
+    lda #0 : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch
 
     ; keyboard off
     ; *fx 178,0,0
@@ -83,38 +84,12 @@ ORG &3000
     pla
     sta &fc
     plp
-    jmp (old_irq)
+    rti
+    ;jmp (old_irq)
 
 .handle_rtc
 
-;     ldx bar_delay_count
-; .wait_loop
-;     dex
-;     beq draw_bars
-;     jsr delay1
-;     jmp wait_loop
-
-; .draw_bars
-;     ldx bar_delay_count
-;     lda bar_delay_direction
-;     beq decrement
-;     inx
-;     stx bar_delay_count
-;     cpx #60
-;     lda #0 ; start decrementing next time around
-;     sta bar_delay_direction
-;     jmp start_drawing
-; .decrement
-;     dex
-;     stx bar_delay_count
-;     bne start_drawing
-;     lda #1 ; start incrementing next time around
-;     sta bar_delay_direction
-
     jsr delay1
-    jsr delay3
-    jsr delay3
-    jsr delay3
     jsr delay3
     jsr delay3
     jsr delay3
@@ -258,7 +233,8 @@ ORG &3000
     pla
     sta &fc
     plp
-    jmp (old_irq)
+    rti
+    ;jmp (old_irq)
 
 .draw_bars
 .start_drawing
@@ -526,7 +502,7 @@ ORG &3000
     nop
     nop
     nop
-    rts ; 58 + 6 (jsr) = 64 cycles = 1 mode 4 scan line?
+    rts ; NOP=2 cycles, RTS=6 => 26*2 + 6 => 58 + 6 (jsr) = 64 cycles = 1 mode 4 scan line?
 
 .end
     RTS
