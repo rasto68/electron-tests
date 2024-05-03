@@ -51,50 +51,48 @@ ORG &3000
     rts
 
 .irq_handler
-    php
+    php ; 3
     ; vsync interrupt
 .vsync
-    ; ; disable interrupts - we're doing everything by counting cycles from now on!
-    ; lda #4 ; 2
-    ; sta &fe00 ; 4
-
     ; set black background
     lda #255 ; 2
     sta color1 ; 4
     lda #255 ; 2
     sta color2 ; 4
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop ; 48 nop cycles
     ldx #59 ; 2
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
+    ; 65 cycles to here from irq_handler
 
 .wait_for_screen_start    
-    jsr wait_one_scanline ; 6
+    jsr wait_one_scanline ; 6 + 42
     dex ; 2
     bne wait_for_screen_start ; 3 or 2 if fall through
 
-    ; 60 * (9 + 42) + (8 + 42) = 3110 cycles + 20 = 3130 cycles since vsync ?
+    ; 65 + 58 * (48 + 2 + 3) + (48 + 2 + 2)
+    ; 3191 cycles to here from irq_handler
 
     ; set red background
     lda #84
@@ -140,7 +138,7 @@ ORG &3000
     sta color2
     jsr wait_one_scanline_2
 
-    ; set yellow background
+    ; set blue background
     lda #68
     sta color1
     lda #21
@@ -160,6 +158,94 @@ ORG &3000
     sta color1
     lda #21
     sta color2
+    jsr wait_one_scanline_2
+
+    ; set cyan background
+    lda #68
+    sta color1
+    lda #5
+    sta color2    
+    jsr wait_one_scanline_2
+    lda #68
+    sta color1
+    lda #5
+    sta color2    
+    jsr wait_one_scanline_2
+    lda #68
+    sta color1
+    lda #5
+    sta color2    
+    jsr wait_one_scanline_2
+    lda #68
+    sta color1
+    lda #5
+    sta color2    
+    jsr wait_one_scanline_2
+
+    ; set green background
+    lda #84
+    sta color1
+    lda #5
+    sta color2
+    jsr wait_one_scanline_2
+    lda #84
+    sta color1
+    lda #5
+    sta color2
+    jsr wait_one_scanline_2
+    lda #84
+    sta color1
+    lda #5
+    sta color2
+    jsr wait_one_scanline_2
+    lda #84
+    sta color1
+    lda #5
+    sta color2
+    jsr wait_one_scanline_2
+
+    ; set magenta background
+    lda #68
+    sta color1
+    lda #20
+    sta color2
+    jsr wait_one_scanline_2
+    lda #68
+    sta color1
+    lda #20
+    sta color2
+    jsr wait_one_scanline_2
+    lda #68
+    sta color1
+    lda #20
+    sta color2
+    jsr wait_one_scanline_2
+    lda #68
+    sta color1
+    lda #20
+    sta color2
+    jsr wait_one_scanline_2
+
+    ; set white background
+    lda #9
+    sta color1
+    lda #0
+    sta color2    
+    jsr wait_one_scanline_2
+    lda #9
+    sta color1
+    lda #0
+    sta color2    
+    jsr wait_one_scanline_2
+    lda #9
+    sta color1
+    lda #0
+    sta color2    
+    jsr wait_one_scanline_2
+    lda #9
+    sta color1
+    lda #0
+    sta color2    
     jsr wait_one_scanline_2
 
     ; back to black
