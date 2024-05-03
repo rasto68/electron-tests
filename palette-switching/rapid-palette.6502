@@ -29,8 +29,8 @@ ORG &3000
     sta &2a0+12
 
     sei
-    ; enable only rtc (8) & vsync (4) interrupts
-    lda #12
+    ; enable only vsync interrupts
+    lda #4
     sta &fe00
 
     lda &204
@@ -46,31 +46,48 @@ ORG &3000
     sta bar_delay_count
     lda #0
     sta bar_delay_direction
+    lda #255
+    sta &7f
     rts
 
 .irq_handler
     php
-    lda &fe00
-    and #4
-    bne vsync
-
-    ; probably rtc - clear and return
-    plp
-    lda &fc
-    rti
-
     ; vsync interrupt
 .vsync
-    ; disable interrupts - we're doing everything by counting cycles from now on!
-    lda #0 ; 2
-    sta &fe00 ; 4
+    ; ; disable interrupts - we're doing everything by counting cycles from now on!
+    ; lda #4 ; 2
+    ; sta &fe00 ; 4
 
     ; set black background
     lda #255 ; 2
     sta color1 ; 4
     lda #255 ; 2
     sta color2 ; 4
-    ldx #61 ; 2
+    ldx #59 ; 2
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
 
 .wait_for_screen_start    
     jsr wait_one_scanline ; 6
@@ -84,64 +101,106 @@ ORG &3000
     sta color1
     lda #20
     sta color2
-    jsr wait_one_scanline
-
-    lda #255
-    sta color1
-    lda #255
-    sta color2
-    plp
-    lda &fc
-    rti
-
-    ; wait we see a red line on the screen
-    jsr wait_one_scanline
-    jsr wait_one_scanline
-    jsr wait_one_scanline
-    jsr wait_one_scanline
-    jsr wait_one_scanline
-
-.wait_and_draw
-.draw_bars
-    ; set red background for 4 lines
-    lda #255
-    sta color1
-    lda #255
-    sta color2
-    jsr wait_one_scanline
-    lda #255
-    sta color1
-    lda #255
-    sta color2
-    jsr wait_one_scanline
-    lda #255
-    sta color1
-    lda #255
-    sta color2
-    jsr wait_one_scanline
-    lda #255
-    sta color1
-    lda #255
-    sta color2
-    jsr wait_one_scanline
-
-    ; set black background
-    ldx #252 ; black for 252 lines
-.blank_loop    
+    jsr wait_one_scanline_2
     lda #84
     sta color1
     lda #20
     sta color2
-    jsr wait_one_scanline
-    dex
-    bne blank_loop
+    jsr wait_one_scanline_2
+    lda #84
+    sta color1
+    lda #20
+    sta color2
+    jsr wait_one_scanline_2
+    lda #84
+    sta color1
+    lda #20
+    sta color2
+    jsr wait_one_scanline_2
 
-    jmp wait_and_draw ; 3 cycles
+    ; set yellow background
+    lda #84
+    sta color1
+    lda #4
+    sta color2
+    jsr wait_one_scanline_2
+    lda #84
+    sta color1
+    lda #4
+    sta color2
+    jsr wait_one_scanline_2
+    lda #84
+    sta color1
+    lda #4
+    sta color2
+    jsr wait_one_scanline_2
+    lda #84
+    sta color1
+    lda #4
+    sta color2
+    jsr wait_one_scanline_2
+
+    ; set yellow background
+    lda #68
+    sta color1
+    lda #21
+    sta color2
+    jsr wait_one_scanline_2
+    lda #68
+    sta color1
+    lda #21
+    sta color2
+    jsr wait_one_scanline_2
+    lda #68
+    sta color1
+    lda #21
+    sta color2
+    jsr wait_one_scanline_2
+    lda #68
+    sta color1
+    lda #21
+    sta color2
+    jsr wait_one_scanline_2
+
+    ; back to black
+    lda #255
+    sta color1
+    lda #255
+    sta color2
+
+    lda #16
+    sta &fe05
+    plp
+    lda &fc
+    rti
 
 ; 1 scan line = 64us
 ; this delay is enough to skip 1 scan line at a time
 .wait_one_scanline
     nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    rts ; NOP=2 cycles, RTS=6 => 21*2 + 6 => 42 + 6 (jsr) = 48 cycles = 1 mode 4 scan line?
+
+.wait_one_scanline_2
     nop
     nop
     nop
