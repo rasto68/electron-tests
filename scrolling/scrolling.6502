@@ -1,4 +1,30 @@
 oswrch = &ffee
+vsync_interrupt = 4
+irq = &204
+
+line_length = &140
+
+display_start_ptr = &70
+display_start = &5800
+
+reset_start = &8000 - line_length
+
+draw_1_start = display_start - line_length
+draw_1_start_ptr = &72
+draw_1_end = display_start + line_length - 8
+draw_1_end_ptr = &74
+
+buffer_start = &3000
+draw_2_start = buffer_start - line_length
+draw_2_start_ptr = &76
+draw_2_end = buffer_start + line_length - 8
+draw_2_end_ptr = &78
+
+scroll_delay = 5
+scroll_delay_ptr = &7a
+
+scroll_counter = 32
+scroll_counter_ptr = &7b
 
 ORG &2000
 
@@ -25,47 +51,23 @@ ORG &2000
 
     sei
     ; enable only vsync interrupts
-    lda #4
+    lda #vsync_interrupt
     sta &fe00
 
-    lda &204
+    lda irq
     sta old_irq
-    lda &205
+    lda irq + 1
     sta old_irq + 1
     lda #irq_handler MOD 256
-    sta &204
+    sta irq
     lda #irq_handler DIV 256
-    sta &205
+    sta irq + 1
     cli
 
-    lda #&30
-    sta &71
-    lda #0
-    sta &70
-    ldx #64
-.outer_loop
-    ldy #7
-    txa
-.inner_loop
-    sta (&70),Y
-    dey
-    bpl inner_loop
-    lda &70
-    clc
-    adc #&40
-    sta &70
-    lda &71
-    adc #1
-    sta &71
-    dex
-    bpl outer_loop
+    lda #scroll_delay
+    sta scroll_delay_ptr
 
-    lda #(&5800 DIV 512)
-    sta &71
-    lda #(&5800 MOD 512) DIV 2
-    sta &70
-    lda #32
-    sta &72
+    jsr reset_scroll
 
 .forever
     jmp forever
@@ -73,33 +75,114 @@ ORG &2000
 
 .irq_handler
     php
+    tya
+    pha
     lda &fe00
-    and #4
+    and #vsync_interrupt
     beq end_irq_handler
-.vsync
-    lda &70    
-    sta &fe02
-    sec
-    sbc #&a0
-    sta &70
-    lda &71
-    sta &fe03
-    sbc #0
-    sta &71
 
-    dec &72
-    bpl end_irq_handler
-    lda #(&5800 DIV 512)
-    sta &71
-    lda #(&5800 MOD 512) DIV 2
-    sta &70
-    lda #32
-    sta &72
+.vsync
+    dec scroll_delay_ptr
+    lda scroll_delay_ptr
+    cmp #scroll_delay - 1    
+    bne end_irq_handler
+    
+.draw_1_row
+    ; draw 1 row
+    ldy #7
+.inner_loop
+    lda #1
+    sta (draw_1_start_ptr),Y
+    sta (draw_2_start_ptr),Y
+    lda #128
+    sta (draw_1_end_ptr),Y
+    sta (draw_2_end_ptr),Y
+    dey
+    bpl inner_loop
+
+    lda display_start_ptr
+    lsr a
+    sta &fe02
+    lda display_start_ptr + 1
+    ror a
+    sta &fe03
+
+    dec scroll_counter_ptr
+    bne scroll_1_line
+
+    jsr reset_scroll
+    jmp end_irq_handler
+
+.scroll_1_line
+    sec
+    lda draw_1_start_ptr
+    sbc #&40
+    sta draw_1_start_ptr
+    lda draw_1_start_ptr + 1
+    sbc #1
+    sta draw_1_start_ptr + 1
+
+    sec
+    lda draw_1_end_ptr
+    sbc #&40
+    sta draw_1_end_ptr
+    lda draw_1_end_ptr + 1
+    sbc #1
+    sta draw_1_end_ptr + 1
+
+    sec
+    lda draw_2_start_ptr
+    sbc #&40
+    sta draw_2_start_ptr
+    lda draw_2_start_ptr + 1
+    sbc #1
+    sta draw_2_start_ptr + 1
+
+    sec
+    lda draw_2_end_ptr
+    sbc #&40
+    sta draw_2_end_ptr
+    lda draw_2_end_ptr + 1
+    sbc #1
+    sta draw_2_end_ptr + 1
 
 .end_irq_handler
+    lda scroll_delay_ptr
+    bne skip_delay_reset
+    lda #scroll_delay
+    sta scroll_delay_ptr
+.skip_delay_reset
+    pla
+    tay
     plp
     lda &fc
     jmp (old_irq)
+
+    ; reset scroll
+.reset_scroll
+    lda #draw_1_start DIV 256
+    sta draw_1_start_ptr + 1
+    lda #draw_1_start MOD 256
+    sta draw_1_start_ptr
+
+    lda #draw_1_end DIV 256
+    sta draw_1_end_ptr + 1
+    lda #draw_1_end MOD 256
+    sta draw_1_end_ptr
+
+    lda #draw_2_start DIV 256
+    sta draw_2_start_ptr + 1
+    lda #draw_2_start MOD 256
+    sta draw_2_start_ptr
+
+    lda #draw_2_end DIV 256
+    sta draw_2_end_ptr + 1
+    lda #draw_2_end MOD 256
+    sta draw_2_end_ptr
+
+    lda #scroll_counter
+    sta scroll_counter_ptr
+    rts
 
 .end
     rts
