@@ -1,0 +1,111 @@
+oswrch = &ffee
+
+ORG &2000
+
+.start    
+    ; set mode 4
+    lda #22 : jsr oswrch : lda #4 : jsr oswrch
+
+    ; need equivalent of VDU23,1,0;0;0;0; here to turn off cursor
+    lda #23 : jsr oswrch : lda #1 : jsr oswrch
+    lda #0 : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch : jsr oswrch
+
+    ; keyboard off
+    ; *fx 178,0,0
+    ; lda #0
+    ; sta &242
+
+    ; plus 1 off
+    lda #&d6
+    sta &212
+    lda #&f1
+    sta &213
+    lda #0
+    sta &2a0+12
+
+    sei
+    ; enable only vsync interrupts
+    lda #4
+    sta &fe00
+
+    lda &204
+    sta old_irq
+    lda &205
+    sta old_irq + 1
+    lda #irq_handler MOD 256
+    sta &204
+    lda #irq_handler DIV 256
+    sta &205
+    cli
+
+    lda #&30
+    sta &71
+    lda #0
+    sta &70
+    ldx #64
+.outer_loop
+    ldy #7
+    txa
+.inner_loop
+    sta (&70),Y
+    dey
+    bpl inner_loop
+    lda &70
+    clc
+    adc #&40
+    sta &70
+    lda &71
+    adc #1
+    sta &71
+    dex
+    bpl outer_loop
+
+    lda #(&5800 DIV 512)
+    sta &71
+    lda #(&5800 MOD 512) DIV 2
+    sta &70
+    lda #32
+    sta &72
+
+.forever
+    jmp forever
+    rts
+
+.irq_handler
+    php
+    lda &fe00
+    and #4
+    beq end_irq_handler
+.vsync
+    lda &70    
+    sta &fe02
+    sec
+    sbc #&a0
+    sta &70
+    lda &71
+    sta &fe03
+    sbc #0
+    sta &71
+
+    dec &72
+    bpl end_irq_handler
+    lda #(&5800 DIV 512)
+    sta &71
+    lda #(&5800 MOD 512) DIV 2
+    sta &70
+    lda #32
+    sta &72
+
+.end_irq_handler
+    plp
+    lda &fc
+    jmp (old_irq)
+
+.end
+    rts
+
+.old_irq
+    EQUW 0
+
+
+SAVE "scroll", start, end
